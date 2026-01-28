@@ -1,0 +1,78 @@
+Subject: [PATCH] [build][webos][wam] Fix error 'templates must have C++ linkage'
+
+:Release Notes:
+Fixed error 'templates must have C++ linkage' when building wam with
+Clang
+
+:Detailed Notes:
+Moved extern "C" language linkage specification below inclusion of
+<lttng/tracepoint.h> which requires C++ linkage to fix errors when
+building wam-clang like the following one:
+In file included from /ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/git/src/core/trace/web_app_manager_tracer_lib.cc:19:
+In file included from /ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/git/src/core/trace/pmtrace_webappmanager3_provider.h:31:
+In file included from /ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/recipe-sysroot/usr/include/lttng/tracepoint.h:13:
+In file included from /ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/recipe-sysroot/usr/include/lttng/tracepoint-rcu.h:10:
+In file included from /ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/recipe-sysroot/usr/include/urcu/compiler.h:25:
+In file included from /ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/recipe-sysroot/usr/include/c++/v1/type_traits:465:
+/ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/recipe-sysroot/usr/include/c++/v1/__type_traits/add_cv_quals.h:26:1: error: templates must have C++ linkage
+   26 | template <class _Tp>
+      | ^~~~~~~~~~~~~~~~~~~~
+/ssd/build-webos/BUILD/work/raspberrypi4_64-webos-linux/wam-clang/1.0.2-100/git/src/core/trace/pmtrace_webappmanager3_provider.h:24:1: note: extern "C" language linkage specification begins here
+   24 | extern "C" {
+      | ^
+
+Cherry-pick of the RP CL http://gpro.lge.com/c/webosose/wam/+/466523.
+
+:Testing Performed:
+1. Run wam-clang build
+2. Check that there is no error 'templates must have C++ linkage'
+
+:QA Notes:
+
+:Issues Addressed:
+[NEVA-10687] [Clang for webOS][OSE] Adapt Neva meta layer to build wam, webos-image with Chromium internal Clang/libc++
+---
+ src/core/trace/pmtrace_webappmanager3_provider.h | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
+diff --git a/src/core/trace/pmtrace_webappmanager3_provider.h b/src/core/trace/pmtrace_webappmanager3_provider.h
+index 631c30d..af28fcc 100644
+--- a/src/core/trace/pmtrace_webappmanager3_provider.h
++++ b/src/core/trace/pmtrace_webappmanager3_provider.h
+@@ -20,16 +20,16 @@
+ #undef TRACEPOINT_INCLUDE
+ #define TRACEPOINT_INCLUDE "pmtrace_webappmanager3_provider.h"
+ 
+-#ifdef __cplusplus
+-extern "C" {
+-#endif /*__cplusplus */
+-
+ #if !defined(_PMTRACE_WEBAPPMANAGER3_PROVIDER_H) || \
+     defined(TRACEPOINT_HEADER_MULTI_READ)
+ #define _PMTRACE_WEBAPPMANAGER3_PROVIDER_H
+ 
+ #include <lttng/tracepoint.h>
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /*__cplusplus */
++
+ /* "message" tracepoint should be used for single event trace points */
+ TRACEPOINT_EVENT(pmtrace_webappmanager3,
+                  message,
+@@ -83,11 +83,10 @@ TRACEPOINT_EVENT(pmtrace_webappmanager3,
+                  function_exit,
+                  TP_ARGS(const char*, text),
+                  TP_FIELDS(ctf_string(scope, text)))
++#ifdef __cplusplus
++}
++#endif /*__cplusplus */
+ 
+ #endif /* _PMTRACE_WEBAPPMANAGER3_PROVIDER_H */
+ 
+ #include <lttng/tracepoint-event.h>
+-
+-#ifdef __cplusplus
+-}
+-#endif /*__cplusplus */
+-- 
+2.34.1

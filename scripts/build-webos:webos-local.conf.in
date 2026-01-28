@@ -1,0 +1,142 @@
+INHERIT += "externalsrc"
+
+ERROR_QA:remove = "webos-enh-sub-autorev-error"
+WARN_QA:append = " webos-enh-sub-autorev-error"
+
+ERROR_QA:remove = "host-user-contaminated"
+WARN_QA:append = " host-user-contaminated"
+
+ERROR_QA:remove = "already-stripped"
+WARN_QA:append = " already-stripped"
+
+ERROR_QA:remove:pn-iotivity-node = "file-rdeps"
+WARN_QA:append:pn-iotivity-node = " file-rdeps"
+
+# For Yocto 5.0 compatibility
+ERROR_QA:remove = "patch-status"
+WARN_QA:append = " patch-status"
+
+# Clang recipes
+DEPLOY_UNITTESTS:pn-webruntime-clang = "false"
+DEPLOY_BROWSER:pn-webruntime-clang = "false"
+# GCC recipes
+DEPLOY_UNITTESTS:pn-webruntime = "false"
+DEPLOY_BROWSER:pn-webruntime = "false"
+
+WEBOS_IMAGE_EXTRA_INSTALL:append:pn-webos-image = " utouch-evemu smemcap"
+
+# Uncomment following line to use GCC compiler instead of Clang.
+# WEBRUNTIME_TOOLCHAIN:forcevariable = ""
+
+# Do not send any build reports.
+ERR_REPORT_UPLOAD_ALL:forcevariable = "0"
+
+# Uncomment following line to switch off generation of snapshot_blob.bin for
+# enactJS applications
+# WEBOS_ENACTJS_PACK_OPTS:remove = "--snapshot"
+
+# Uncomment following line to switch off generation of snapshot_blob.bin for
+# a web app and replace <web-app-name> with actual web app name
+# Rewrite WEBOS_ENACTJS_PACK_OPTS for targets:
+# WEBOS_ENACTJS_PACK_OPTS:remove:<web-app-name> = "--snapshot"
+
+# Add/remove another options here.
+# Note: You must control all spacing when you use the override syntax.
+# See https://docs.yoctoproject.org/bitbake/dev/bitbake-user-manual/bitbake-user-manual-metadata.html#appending-and-prepending-override-style-syntax
+# Clang recipes
+PACKAGECONFIG:remove:pn-webruntime-clang = ""
+PACKAGECONFIG:append:pn-webruntime-clang = ""
+# GCC recipes
+PACKAGECONFIG:remove:pn-webruntime = ""
+PACKAGECONFIG:append:pn-webruntime = ""
+
+# Disable RP/webOS ccache to use Neva own ccache/icecc implementation
+CCACHE_DISABLE:pn-webruntime-clang:forcevariable = "1"
+CCACHE_DISABLE:pn-chromium-stdlib:forcevariable = "1"
+CCACHE_DISABLE:pn-webruntime:forcevariable = "1"
+CCACHE_DISABLE:pn-mksnapshot-cross-aarch64:forcevariable = "1"
+CCACHE_DISABLE:pn-mksnapshot-cross-x86-64:forcevariable = "1"
+
+CCACHE_ENVIRONMENT = "\
+  export CCACHE_BASEDIR=${S}; \
+  export CCACHE_MAXSIZE=16G ; \
+  export CCACHE_COMPILERCHECK=content; \
+  export CCACHE_SLOPPINESS=locale; \
+  export CCACHE_DIR=@@WORKSPACE@@/build-neva/.ccache; \
+  export CCACHE_TEMPDIR=/dev/shm/ccache; \
+  export CCACHE_NOREADONLY="true"; \
+  export CCACHE_SECONDARY_STORAGE="http://mercury.lge.net:8000/webosose-build/ccache"; \
+"
+
+# Clang recipes
+EXTERNALSRC:pn-webruntime-clang = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-webruntime-clang = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-webruntime-clang = "-j 24"
+ICECC_DISABLED:pn-webruntime-clang = "0"
+CCACHE:pn-webruntime-clang = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-webruntime-clang = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-webruntime-clang = "${CCACHE_ENVIRONMENT}"
+
+EXTERNALSRC:pn-chromium-toolchain-native = "@@WORKSPACE@@/chromium/src"
+
+EXTERNALSRC:pn-chromium-stdlib = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-chromium-stdlib = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-chromium-stdlib = "-j 24"
+ICECC_DISABLED:pn-chromium-stdlib = "0"
+ICECC_PARALLEL_MAKE:pn-chromium-stdlib = "-j 64"
+CCACHE:pn-chromium-stdlib = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-chromium-stdlib = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-chromium-stdlib = "${CCACHE_ENVIRONMENT}"
+# ------
+
+# GCC recipes
+EXTERNALSRC:pn-webruntime = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-webruntime = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-webruntime = "-j 24"
+ICECC_DISABLED:pn-webruntime = "0"
+CCACHE:pn-webruntime = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-webruntime = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-webruntime = "${CCACHE_ENVIRONMENT}"
+# ------
+
+# MACHINE=raspberrypi4-64 build only
+EXTERNALSRC:pn-mksnapshot-cross-aarch64 = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-mksnapshot-cross-aarch64 = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-mksnapshot-cross-aarch64 = "-j 24"
+ICECC_DISABLED:pn-mksnapshot-cross-aarch64 = "0"
+CCACHE:pn-mksnapshot-cross-aarch64 = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-mksnapshot-cross-aarch64 = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-mksnapshot-cross-aarch64 = "${CCACHE_ENVIRONMENT}"
+# ------
+
+# MACHINE=qemux86-64 build only
+EXTERNALSRC:pn-mksnapshot-cross-x86-64 = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-mksnapshot-cross-x86-64 = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-mksnapshot-cross-x86-64 = "-j 24"
+ICECC_DISABLED:pn-mksnapshot-cross-x86-64 = "0"
+CCACHE:pn-mksnapshot-cross-x86-64 = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-mksnapshot-cross-x86-64 = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-mksnapshot-cross-x86-64 = "${CCACHE_ENVIRONMENT}"
+# ------
+
+# MACHINE=raspberrypi4 legacy build only
+EXTERNALSRC:pn-mksnapshot-cross-arm = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-mksnapshot-cross-arm = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-mksnapshot-cross-arm = "-j 24"
+ICECC_DISABLED:pn-mksnapshot-cross-arm = "0"
+CCACHE:pn-mksnapshot-cross-arm = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-mksnapshot-cross-arm = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-mksnapshot-cross-arm = "${CCACHE_ENVIRONMENT}"
+# ------
+
+# MACHINE=qemux86 legacy build only
+EXTERNALSRC:pn-mksnapshot-cross-i686 = "@@WORKSPACE@@/chromium/src"
+DEPOT_TOOLS_DIR:pn-mksnapshot-cross-i686 = "@@WORKSPACE@@/depot_tools"
+PARALLEL_MAKE:pn-mksnapshot-cross-i686 = "-j 24"
+ICECC_DISABLED:pn-mksnapshot-cross-i686 = "0"
+CCACHE:pn-mksnapshot-cross-i686 = "@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc "
+GN_ARGS:append:pn-mksnapshot-cross-i686 = " cc_wrapper=\"@@WORKSPACE@@/build-neva/neva_tools/ccache+icecc\" "
+do_compile:prepend:pn-mksnapshot-cross-i686 = "${CCACHE_ENVIRONMENT}"
+# ------
+
+EXTERNALSRC:pn-com.webos.app.enactbrowser = "@@WORKSPACE@@/com.webos.app.enactbrowser"

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+webos_flavor=$(basename $(git config --get remote.origin.url))
+template="$(dirname $0)/$webos_flavor:webos-local.conf.in"
+output_file="webos-local.conf"
+
+sed -e "s#@@WORKSPACE@@#$(dirname $(pwd))#g" "$template" > "$output_file"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --disable-snapshot-generation)
+      sed -i -e "/WEBOS_ENACTJS_PACK_OPTS:remove/s/^#.//g " "$output_file"
+      shift
+      ;;
+    --disable-snapshot-for)
+      shift
+      for target in $@; do
+        if [[ ! $target =~ ^--* ]] ; then
+          sed -i -e "/WEBOS_ENACTJS_PACK_OPTS.for.targets/a\\WEBOS_ENACTJS_PACK_OPTS:remove:pn-$target = \"--snapshot\"\n" "$output_file"
+          shift
+        fi
+      done
+      ;;
+  esac
+done
+

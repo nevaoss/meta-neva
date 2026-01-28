@@ -1,0 +1,125 @@
+From cc6d2b78ce16636171244a372dbde41d7be8c9ee Mon Sep 17 00:00:00 2001
+From: Youngsoo Choi <youngsoo.choi@lge.com>
+Date: Fri, 13 Sep 2024 17:24:37 +0900
+Subject: [PATCH] Add DidWebContentsChanged event to support PageDiscarder
+ feature
+
+:Release Notes:
+Added DidWebContentsChanged event to support PageDiscarder feature
+
+:Detailed Notes:
+To launch the web app properly after the app is discarded, the
+DidWebContentsChanged event is introduced.
+When WAM receives DidWebContentsChanged event it will initialize the
+WebContents related logic.
+
+:Testing Performed:
+1. Launch web app #1
+2. Launch web app #2
+3. Launch web app #1 again
+4. Verify that the web app #1 is properly launched
+
+:QA Notes:
+
+:Issues Addressed:
+[NEVA-9530] [PageDiscarder][PoC] Apply the PageDiscarder mechanism to Neva
+[NEVA-9631] [PageDiscarder] Restore information that was stored on WebContents instance
+---
+ src/platform/webengine/blink_web_view.cc         |  6 ++++++
+ src/platform/webengine/blink_web_view.h          |  1 +
+ src/platform/webengine/web_page_blink.cc         | 13 ++++++++++++-
+ src/platform/webengine/web_page_blink.h          |  1 +
+ src/platform/webengine/web_page_blink_delegate.h |  1 +
+ 5 files changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/src/platform/webengine/blink_web_view.cc b/src/platform/webengine/blink_web_view.cc
+index 8a6a894b..76ebdfde 100644
+--- a/src/platform/webengine/blink_web_view.cc
++++ b/src/platform/webengine/blink_web_view.cc
+@@ -247,3 +247,9 @@ void BlinkWebView::DidErrorPageLoadedFromNetErrorHelper() {
+   }
+   return delegate_->DidErrorPageLoadedFromNetErrorHelper();
+ }
++
++void BlinkWebView::DidWebContentsChanged() {
++  if (delegate_) {
++    delegate_->DidWebContentsChanged();
++  }
++}
+diff --git a/src/platform/webengine/blink_web_view.h b/src/platform/webengine/blink_web_view.h
+index 52df42aa..fc66e5a4 100644
+--- a/src/platform/webengine/blink_web_view.h
++++ b/src/platform/webengine/blink_web_view.h
+@@ -75,6 +75,7 @@ class BlinkWebView : public webos::WebViewBase {
+   void LoadVisuallyCommitted() override;
+   void DidResumeDOM() override;
+   void DidErrorPageLoadedFromNetErrorHelper() override;
++  void DidWebContentsChanged() override;
+ 
+  private:
+   WebPageBlinkDelegate* delegate_ = nullptr;
+diff --git a/src/platform/webengine/web_page_blink.cc b/src/platform/webengine/web_page_blink.cc
+index 4b97e0f3..4949d06a 100644
+--- a/src/platform/webengine/web_page_blink.cc
++++ b/src/platform/webengine/web_page_blink.cc
+@@ -79,7 +79,9 @@ WebPageBlink::~WebPageBlink() {
+ }
+ 
+ void WebPageBlink::Init() {
+-  page_private_->page_view_ = std::unique_ptr<WebView>(CreatePageView());
++  if (!page_private_->page_view_) {
++    page_private_->page_view_ = std::unique_ptr<WebView>(CreatePageView());
++  }
+   page_private_->page_view_->SetDelegate(this);
+   page_private_->page_view_->Initialize(
+       app_desc_.Id() + std::to_string(app_desc_.GetDisplayAffinity()),
+@@ -661,6 +663,11 @@ void WebPageBlink::DidResumeDOM() {
+   }
+ }
+ 
++void WebPageBlink::DidWebContentsChanged() {
++  Init();
++  FOR_EACH_OBSERVER(WebPageObserver, observers_, WebViewRecreated());
++}
++
+ void WebPageBlink::LoadFinished(const std::string& url) {
+   LOG_INFO(MSGID_LOAD, 3, PMLOGKS("APP_ID", AppId().c_str()),
+            PMLOGKS("INSTANCE_ID", InstanceId().c_str()),
+@@ -780,6 +787,10 @@ void WebPageBlink::RecreateWebView() {
+     custom_plugin_path_.clear();  // just make it init state
+   }
+ 
++  // NOTE(neva): To create a new PageView instance when the renderer
++  // process crashed
++  page_private_->page_view_ = nullptr;
++
+   Init();
+   FOR_EACH_OBSERVER(WebPageObserver, observers_, WebViewRecreated());
+ 
+diff --git a/src/platform/webengine/web_page_blink.h b/src/platform/webengine/web_page_blink.h
+index d400fc1e..c84028a7 100644
+--- a/src/platform/webengine/web_page_blink.h
++++ b/src/platform/webengine/web_page_blink.h
+@@ -135,6 +135,7 @@ class WebPageBlink : public WebPageBase, public WebPageBlinkDelegate {
+   void DidErrorPageLoadedFromNetErrorHelper() override;
+   void DidSwapCompositorFrame() override;
+   void DidResumeDOM() override;
++  void DidWebContentsChanged() override;
+ 
+   void UpdateExtensionData(const std::string& key, const std::string& value);
+   void SetLoadErrorPolicy(const std::string& policy);
+diff --git a/src/platform/webengine/web_page_blink_delegate.h b/src/platform/webengine/web_page_blink_delegate.h
+index 5f0a1bbd..3d46c41f 100644
+--- a/src/platform/webengine/web_page_blink_delegate.h
++++ b/src/platform/webengine/web_page_blink_delegate.h
+@@ -59,6 +59,7 @@ class WebPageBlinkDelegate {
+   virtual void DidSwapCompositorFrame() {}
+   virtual void DidResumeDOM() {}
+   virtual void DidErrorPageLoadedFromNetErrorHelper() = 0;
++  virtual void DidWebContentsChanged() {}
+ };
+ 
+ #endif  // PLATFORM_WEBENGINE_WEB_PAGE_BLINK_DELEGATE_H_
+-- 
+2.43.2
+

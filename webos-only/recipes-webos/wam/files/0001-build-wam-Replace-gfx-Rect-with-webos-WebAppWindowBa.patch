@@ -1,0 +1,138 @@
+From d0cddb3ef0c0ac01e655150d11000ac8dd329219 Mon Sep 17 00:00:00 2001
+From: Yunsik Jung <yunsik.jung@lge.com>
+Date: Tue, 14 Jan 2025 15:42:02 +0900
+Subject: [PATCH] [build][wam] Replace gfx::Rect with
+ webos::WebAppWindowBase::Region for webOS OSE
+
+:Release Notes:
+Replaced gfx::Rect with webos::WebAppWindowBase::Region for webOS OSE
+
+:Detailed Notes:
+In http://justice.lge.com:8080/c/neva/chromium/+/12590,
+'WebAppWindowBase::SetInputRegion()' with struct
+'WebAppWindowBase::Region' was added.
+By using 'WebAppWindowBase::Region' instead of 'gfx::Rect', wam can
+remove Chromium internal dependency
+
+:Testing Performed:
+In OSE, build done successfully and home app is properly shown
+
+:QA Notes:
+
+:Issues Addressed:
+[NEVA-9921] Remove use of 'gfx::Rect' from app_runtime/webos public headers and wam
+---
+ src/platform/web_app_wayland.cc       | 16 ++++++++--------
+ src/platform/web_app_wayland.h        |  2 +-
+ src/platform/web_app_window.h         |  3 ++-
+ src/platform/web_app_window_impl.cc   |  3 ++-
+ src/platform/web_app_window_impl.h    |  3 ++-
+ src/tests/mocks/web_app_window_mock.h |  3 ++-
+ 6 files changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/src/platform/web_app_wayland.cc b/src/platform/web_app_wayland.cc
+index e36eaf2e..3da42fe1 100644
+--- a/src/platform/web_app_wayland.cc
++++ b/src/platform/web_app_wayland.cc
+@@ -410,11 +410,11 @@ void WebAppWayland::SetInputRegion(const Json::Value& value) {
+ 
+   if (value.isArray()) {
+     for (const auto& region : value) {
+-      input_region_.emplace_back(
+-          gfx::Rect(region["x"].asInt() * scale_factor_,
+-                    region["y"].asInt() * scale_factor_,
+-                    region["width"].asInt() * scale_factor_,
+-                    region["height"].asInt() * scale_factor_));
++      input_region_.emplace_back(webos::WebAppWindowBase::Region{
++          static_cast<int>(region["x"].asInt() * scale_factor_),
++          static_cast<int>(region["y"].asInt() * scale_factor_),
++          static_cast<int>(region["width"].asInt() * scale_factor_),
++          static_cast<int>(region["height"].asInt() * scale_factor_)});
+     }
+   }
+ 
+@@ -821,9 +821,9 @@ void WebAppWayland::MoveInputRegion(int height) {
+     vkb_height_ = -vkb_height_;
+   }
+ 
+-  std::vector<gfx::Rect> new_region;
+-  for (gfx::Rect rect : input_region_) {
+-    rect.SetRect(rect.x(), rect.y() - vkb_height_, rect.width(), rect.height());
++  std::vector<webos::WebAppWindowBase::Region> new_region;
++  for (webos::WebAppWindowBase::Region rect : input_region_) {
++    rect.pos_y -= vkb_height_;
+     new_region.push_back(rect);
+   }
+   input_region_.clear();
+diff --git a/src/platform/web_app_wayland.h b/src/platform/web_app_wayland.h
+index 16912766..6e563882 100644
+--- a/src/platform/web_app_wayland.h
++++ b/src/platform/web_app_wayland.h
+@@ -169,7 +169,7 @@ class WebAppWayland : public WebAppBase, WebPageBlinkObserver {
+   int last_swapped_time_ = 0;
+   bool did_activate_stage_ = false;
+ 
+-  std::vector<gfx::Rect> input_region_;
++  std::vector<webos::WebAppWindowBase::Region> input_region_;
+   bool enable_input_region_ = false;
+ 
+   bool is_focused_ = false;
+diff --git a/src/platform/web_app_window.h b/src/platform/web_app_window.h
+index ed177a3c..d46ab249 100644
+--- a/src/platform/web_app_window.h
++++ b/src/platform/web_app_window.h
+@@ -41,7 +41,8 @@ class WebAppWindow {
+   virtual bool IsKeyboardVisible() = 0;
+   virtual void SetKeyMask(webos::WebOSKeyMask key_mask) = 0;
+   virtual void SetKeyMask(webos::WebOSKeyMask key_mask, bool set) = 0;
+-  virtual void SetInputRegion(const std::vector<gfx::Rect>& region) = 0;
++  virtual void SetInputRegion(
++      const std::vector<webos::WebAppWindowBase::Region>& region) = 0;
+   virtual void SetWindowProperty(const std::string& name,
+                                  const std::string& value) = 0;
+   virtual void Resize(int width, int height) = 0;
+diff --git a/src/platform/web_app_window_impl.cc b/src/platform/web_app_window_impl.cc
+index 5fe7b056..165d56d3 100644
+--- a/src/platform/web_app_window_impl.cc
++++ b/src/platform/web_app_window_impl.cc
+@@ -78,7 +78,8 @@ void WebAppWindowImpl::SetKeyMask(webos::WebOSKeyMask key_mask, bool set) {
+   }
+ }
+ 
+-void WebAppWindowImpl::SetInputRegion(const std::vector<gfx::Rect>& region) {
++void WebAppWindowImpl::SetInputRegion(
++    const std::vector<webos::WebAppWindowBase::Region>& region) {
+   if (window_) {
+     window_->SetInputRegion(region);
+   }
+diff --git a/src/platform/web_app_window_impl.h b/src/platform/web_app_window_impl.h
+index 6649d5e8..b93a8e1c 100644
+--- a/src/platform/web_app_window_impl.h
++++ b/src/platform/web_app_window_impl.h
+@@ -41,7 +41,8 @@ class WebAppWindowImpl : public WebAppWindow {
+   bool IsKeyboardVisible() override;
+   void SetKeyMask(webos::WebOSKeyMask key_mask) override;
+   void SetKeyMask(webos::WebOSKeyMask key_mask, bool set) override;
+-  void SetInputRegion(const std::vector<gfx::Rect>& region) override;
++  void SetInputRegion(
++      const std::vector<webos::WebAppWindowBase::Region>& region) override;
+   void SetWindowProperty(const std::string& name,
+                          const std::string& value) override;
+   void Resize(int width, int height) override;
+diff --git a/src/tests/mocks/web_app_window_mock.h b/src/tests/mocks/web_app_window_mock.h
+index 0309d04d..1fe49ef5 100644
+--- a/src/tests/mocks/web_app_window_mock.h
++++ b/src/tests/mocks/web_app_window_mock.h
+@@ -26,7 +26,8 @@ class WebAppWindowMock : public WebAppWindow {
+   WebAppWindowMock() = default;
+   ~WebAppWindowMock() override = default;
+ 
+-  void SetInputRegion(const std::vector<gfx::Rect>&) override {}
++  void SetInputRegion(
++      const std::vector<webos::WebAppWindowBase::Region>& region) override {}
+   MOCK_METHOD(int, DisplayWidth, (), (override));
+   MOCK_METHOD(int, DisplayHeight, (), (override));
+   MOCK_METHOD(void, InitWindow, (int, int), (override));
+-- 
+2.45.2
+

@@ -1,0 +1,114 @@
+From 85a3c7f6bf693c2c0bb88869a29fea456ac93597 Mon Sep 17 00:00:00 2001
+From: Joonhyung Hwang <joonhyung.hwang@lge.com>
+Date: Mon, 20 Jan 2025 14:56:59 +0900
+Subject: [PATCH] [op][code health] Remove std::codecvt_utf8_utf16
+
+:Release Notes:
+Remove usage of std::codecvt_utf8_utf16.
+
+:Detailed Notes:
+Avoid using UTF-16 strings in WAM.
+
+This patch fixes the following warnings:
+  .../src/platform/notification_platform_bridge.cc:30:29: warning:
+  'codecvt_utf8_utf16<char16_t>' is deprecated
+  [-Wdeprecated-declarations]
+
+  .../src/platform/notification_platform_bridge.cc:30:8: warning:
+  'wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>' is
+  deprecated [-Wdeprecated-declarations]
+
+  .../src/webos/web_app_manager_service_luna.cc:397:10: warning:
+  'wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>' is
+  deprecated [-Wdeprecated-declarations]
+
+  .../src/webos/web_app_manager_service_luna.cc:397:31: warning:
+  'codecvt_utf8_utf16<char16_t>' is deprecated
+  [-Wdeprecated-declarations]
+
+std::codecvt_utf8_utf16 is deprecated in C++17:
+https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0618r0.html
+
+:Testing Performed:
+Build successfully.
+
+:QA Notes:
+Test-cases: QWTC-13957, QWTC-13973
+Depends on: http://gpro.lge.com/c/webosose/chromium120/+/466066
+
+:Issues Addressed:
+[WRR-3867] Replace <codecvt>
+
+Change-Id: I849fa42dc066e8da0dc524b906601d986b1a31fd
+Reviewed-on: http://gpro.lge.com/c/webosose/wam/+/433401
+Tested-by: Joonhyung Hwang <joonhyung.hwang@lge.com>
+Reviewed-by: Joonhyung Hwang <joonhyung.hwang@lge.com>
+Reviewed-by: Automated Checker <automated_checker@lge.com>
+---
+ src/platform/notification_platform_bridge.cc | 9 ++-------
+ src/webos/web_app_manager_service_luna.cc    | 7 ++-----
+ 2 files changed, 4 insertions(+), 12 deletions(-)
+
+diff --git a/src/platform/notification_platform_bridge.cc b/src/platform/notification_platform_bridge.cc
+index 9c746f6..2b4ff9a 100644
+--- a/src/platform/notification_platform_bridge.cc
++++ b/src/platform/notification_platform_bridge.cc
+@@ -16,9 +16,6 @@
+ 
+ #include "notification_platform_bridge.h"
+ 
+-#include <codecvt>
+-#include <locale>
+-
+ #include "notification_service_luna.h"
+ 
+ NotificationPlatformBridge::NotificationPlatformBridge() = default;
+@@ -27,17 +24,15 @@ NotificationPlatformBridge::~NotificationPlatformBridge() = default;
+ 
+ void NotificationPlatformBridge::Display(
+     const neva_app_runtime::Notification& notification) {
+-  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+-
+   NotificationData data;
+   data.app_id = notification.AppId();
+   for (const neva_app_runtime::ButtonInfo& button : notification.Buttons()) {
+     data.buttons.emplace_back(button.title, button.icon_path);
+   }
+-  data.message = convert.to_bytes(notification.Message());
++  data.message = notification.Message();
+   data.id = notification.Id();
+   data.origin = notification.Origin();
+-  data.title = convert.to_bytes(notification.Title());
++  data.title = notification.Title();
+ 
+   NotificationService::Instance()->Display(data);
+ }
+diff --git a/src/webos/web_app_manager_service_luna.cc b/src/webos/web_app_manager_service_luna.cc
+index ed801e6..6376f77 100644
+--- a/src/webos/web_app_manager_service_luna.cc
++++ b/src/webos/web_app_manager_service_luna.cc
+@@ -16,8 +16,6 @@
+ 
+ #include "web_app_manager_service_luna.h"
+ 
+-#include <codecvt>
+-#include <locale>
+ #include <string>
+ #include <vector>
+ 
+@@ -392,10 +390,9 @@ Json::Value WebAppManagerServiceLuna::fireNotificationEvent(
+     action_index.first = request["actionIndex"].asInt();
+     action_index.second = true;
+   }
+-  auto reply = std::make_pair(std::u16string(), false);
++  auto reply = std::make_pair(std::string(), false);
+   if (request.isMember("reply") && request["reply"].isString()) {
+-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+-    reply.first = convert.from_bytes(request["reply"].asString());
++    reply.first = request["reply"].asString();
+     reply.second = true;
+   }
+   auto dispatcher = neva_app_runtime::GetNotificationEventDispatcher();
+-- 
+2.34.1
+

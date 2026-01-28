@@ -1,0 +1,79 @@
+From 198009961c2f70e409db3f6e0b627ec3e50c13ad Mon Sep 17 00:00:00 2001
+From: Dmitry Ketov <dmitry.ketov@lge.com>
+Date: Mon, 29 May 2023 14:54:44 +0300
+Subject: [PATCH] [build][webos] Allow connman to control NFS root devices on
+ webOS/OSE
+
+:Release Notes:
+Made webOS/OSE builds work properly on NFS root for BVT/FRT
+
+:Detailed Notes:
+This patch makes connman stop filtering NFS root devices
+out but prevents them to be cleaned up by connman
+at startup. This way, connman put NFS root devices
+under full control but does nothing until an explicit
+command arrives. On top of that, ethernet services
+immutable flag gets ignored for Nameservers. Configuration
+command the same way the commercial webOS products connman does.
+
+:Testing Performed:
+RP#2250 and RP#2314 webOS/OSE build and then BVT
+
+:QA Notes:
+
+:Issues Addressed:
+[NEVA-8148] Implement a NFS based BVT/FRT testing for webOS/OSE
+---
+ src/device.c  | 8 ++++++++
+ src/service.c | 5 +++--
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/src/device.c b/src/device.c
+index f1560b81..f72f30e7 100644
+--- a/src/device.c
++++ b/src/device.c
+@@ -1628,10 +1628,13 @@ nodevice:
+ 	}
+ 
+ list:
++	/* Don't filter NFS root device out
++	and therefore put it under full control
+ 	if (__connman_inet_isrootnfs_device(devname)) {
+ 		DBG("ignoring device %s (rootnfs)", devname);
+ 		return true;
+ 	}
++	*/
+ 
+ 	blacklisted_interfaces =
+ 		connman_setting_get_string_list("NetworkInterfaceBlacklist");
+@@ -1680,6 +1683,11 @@ static void cleanup_devices(void)
+ 		if (filtered)
+ 			continue;
+ 
++		/* Don't cleanup NFS root device
++		   cause it's been already configured */
++		if (__connman_inet_isrootnfs_device(interfaces[i]))
++			continue;
++
+ 		index = connman_inet_ifindex(interfaces[i]);
+ 		if (index < 0)
+ 			continue;
+diff --git a/src/service.c b/src/service.c
+index d8e25f1a..b56f454a 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -3766,8 +3766,9 @@ static DBusMessage *set_property(DBusConnection *conn,
+ 		int index;
+ 		const char *gw;
+ 
+-		if (__connman_provider_is_immutable(service->provider) ||
+-				service->immutable)
++		bool skip_immutable_check = service->type == CONNMAN_SERVICE_TYPE_ETHERNET;
++		if (!skip_immutable_check && (__connman_provider_is_immutable(service->provider) ||
++				service->immutable))
+ 			return __connman_error_not_supported(msg);
+ 
+ 		if (type != DBUS_TYPE_ARRAY)
+-- 
+2.26.2
+
