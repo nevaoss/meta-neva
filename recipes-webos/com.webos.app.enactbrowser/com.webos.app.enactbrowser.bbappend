@@ -67,4 +67,10 @@ do_compile:remove() {
 do_npm_install:remove() {
     git apply --no-index --verbose ../samples/enact-based/enact_agate_internal_l.patch
     git apply --no-index --verbose enact_agate_internal_l.patch
+    ${WEBOS_NODE_BIN} ./scripts/cli.js transpile
+}
+
+do_npm_install:append() {
+    cd ${S}
+    ${WEBOS_NPM_BIN} run "transpile"
 }
