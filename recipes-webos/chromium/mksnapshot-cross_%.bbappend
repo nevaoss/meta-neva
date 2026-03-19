@@ -20,12 +20,12 @@ do_configure() {
     fi
 
     if [ "${USE_SISO}" = "true" ]; then
-        # Copy Chromium's Siso config into OUT_DIR to make Siso treat OUT_DIR
+        # Make a link to Chromium's Siso config inside OUT_DIR to make Siso treat OUT_DIR
         # as part of exec_root. By default, Siso determines exec_root by locating
-        # build/config/siso, which normally exists under chromium/src. Without this
-        # copy, OUT_DIR outside chromium/src is rejected as "out of exec root".
-        mkdir -p ${OUT_DIR}/build/config
-        cp -r ${S}/src/build/config/siso ${OUT_DIR}/build/config/
+        # build/config/siso, which normally exists under chromium/src. Without this link
+        # OUT_DIR outside chromium/src is rejected as "out of exec root".
+        mkdir -p ${OUT_DIR}/build
+        ln -sfn ${S}/src/build/config ${OUT_DIR}/build/config
     else
         rm -rf ${OUT_DIR}/build/
     fi
