@@ -30,7 +30,7 @@ directory for Neva itself.
 Note: We've currently pinned out our build-webos to builds/master/843,
 please check it out as follows:
 ```bash
-WORKSPACE$ $ git clone https://github.com/webosose/build-webos -b builds/master/843
+WORKSPACE$ git clone https://github.com/webosose/build-webos -b builds/master/843
 ```
 
 ```bash
