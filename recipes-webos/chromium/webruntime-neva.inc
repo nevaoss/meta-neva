@@ -2,6 +2,9 @@
 
 require webruntime-common-neva.inc
 
+# Add required DEPENDS which missed in parent meta
+DEPENDS += " libva"
+
 # Enable this in webos-local.conf or in recipe to build
 DEPLOY_CHROMEDRIVER = "true"
 DEPLOY_WAM_DEMO = "true"
