@@ -50,6 +50,8 @@ GN_ARGS:append = " use_dummy_lastchange=false"
 # Use lld linker for Clang builds instead of gold
 GN_ARGS:append = " use_gold=${@oe.utils.conditional('WEBRUNTIME_TOOLCHAIN', '-clang', 'false', 'true', d)}"
 
+GN_ARGS:append = " is_clang=${@oe.utils.conditional('WEBRUNTIME_TOOLCHAIN', '-clang', 'true', 'false', d)}"
+
 # Add usage of Siso instead of Ninja
 USE_SISO ?= "true"
 GN_ARGS:append = " use_siso=${USE_SISO}"
