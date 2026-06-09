@@ -84,6 +84,10 @@ GN_ARGS:append = " \
 
 addtask do_gclient_sync before do_configure
 
+# It's needed to use MACHINE in do_gclient_sync()
+# and apply different patches for different MACHINEs.
+export MACHINE
+
 do_gclient_sync() {
     export GYP_CHROMIUM_NO_ACTION=1
     export PATH="${HOSTTOOLS_DIR}:${DEPOT_TOOLS_DIR}:$PATH"
