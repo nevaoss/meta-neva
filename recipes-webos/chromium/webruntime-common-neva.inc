@@ -47,6 +47,28 @@ GN_ARGS:append:aarch64 = " v8_snapshot_toolchain=\"//build/toolchain/linux:${V8_
 GN_ARGS:append = " host_pkg_config=\"pkg-config-native\""
 GN_ARGS:append = " use_dummy_lastchange=false"
 
+CLANG_BASE_PATH = "${S}/src/third_party/llvm-build/Release+Asserts"
+# It is needed to fix webOS/OSE QEMUx86 build error,
+# see NEVA-10680.
+GN_ARGS:append = " clang_base_path=\"${CLANG_BASE_PATH}\" "
+
+GN_ARGS:append = " custom_toolchain=\"//build/toolchain/linux/unbundle:default\""
+GN_ARGS:append = " host_toolchain=\"//build/toolchain/linux/unbundle:host\""
+
+# Needed to remove the -fdebug-prefix-map option from the compiler args, as it is not supported by Clang.
+DEBUG_PREFIX_MAP:remove = "${@oe.utils.conditional('WEBRUNTIME_TOOLCHAIN', '-clang', '-fcanon-prefix-map', '', d)}"
+
+CC ="${CLANG_BASE_PATH}/bin/clang"
+CXX ="${CLANG_BASE_PATH}/bin/clang++"
+AR ="${CLANG_BASE_PATH}/bin/llvm-ar"
+NM ="${CLANG_BASE_PATH}/bin/llvm-nm"
+
+# It is needed to use clang instead of GCC for host_toolchain above
+BUILD_CC ="${CLANG_BASE_PATH}/bin/clang"
+BUILD_CXX ="${CLANG_BASE_PATH}/bin/clang++"
+BUILD_AR ="${CLANG_BASE_PATH}/bin/llvm-ar"
+BUILD_NM ="${CLANG_BASE_PATH}/bin/llvm-nm"
+
 # Use lld linker for Clang builds instead of gold
 GN_ARGS:append = " use_gold=${@oe.utils.conditional('WEBRUNTIME_TOOLCHAIN', '-clang', 'false', 'true', d)}"
 

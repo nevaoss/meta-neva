@@ -17,7 +17,3 @@ GN_ARGS:append:qemux86 = " v8_snapshot_toolchain=\"//build/toolchain/cros:${V8_S
 V8_SNAPSHOT_TOOLCHAIN:qemux86-64 = "v8_snapshot"
 GN_ARGS:append:qemux86-64 = " v8_snapshot_toolchain=\"//build/toolchain/cros:${V8_SNAPSHOT_TOOLCHAIN}\" cros_v8_snapshot_sysroot=\"/\""
 # \-- v8_snapshot_toolchain settings end
-
-# It is needed to fix webOS/OSE QEMUx86 build error,
-# see http://jira.lge.com/issue/browse/NEVA-10680.
-GN_ARGS:append:qemux86-64 = " clang_base_path=\"${S}/src/third_party/llvm-build/Release+Asserts/\" "
