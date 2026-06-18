@@ -4,7 +4,7 @@ LIC_FILES_CHKSUM = ""
 ERROR_QA:remove = "license-checksum"
 WARN_QA:append = " license-checksum"
 
-WEBOS_VERSION = "149.0.7827.0_00000000000000000000000000000000"
+WEBOS_VERSION = "150.0.7871.0_00000000000000000000000000000000"
 ERROR_QA:remove = "webos-enh-sub-autorev-error"
 WARN_QA:append = " webos-enh-sub-autorev-error"
 EXTENDPRAUTO:append = "neva1"
