@@ -95,6 +95,11 @@ do_gclient_sync() {
             --custom-var=checkout_x64=False \
             --custom-var=checkout_configuration=small \
             --name=src --unmanaged ${NEVA_GIT_REPO_PREFIX}/chromium
+    gclient recurse -j1 sh -c '
+      if test -d "$(git rev-parse --git-path rebase-apply)"; then
+        echo "Aborting git am in: $PWD"
+        git am --abort
+      fi'
     gclient sync --with_tags --with_branch_heads
 }
 
