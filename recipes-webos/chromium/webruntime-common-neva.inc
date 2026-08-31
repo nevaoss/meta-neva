@@ -11,16 +11,17 @@ EXTENDPRAUTO:append = "neva1"
 
 SRCREV_chromium = "${AUTOREV}"
 SRCREV_depot_tools = "${AUTOREV}"
+SRCREV_FORMAT = "chromium_depot_tools"
 
 # This task doesn`t needed after the replacement unified  manifest to target-specified
 do_configure_manifest[noexec] = "1"
 
-NEVA_GIT_REPO_PREFIX = "https://repo.lge.com/neva"
-CHROMIUM_GIT_REPO_PREFIX = "https://chromium.googlesource.com/chromium"
+NEVA_GIT_REPO_PREFIX = "git://github.com/nevaoss"
+CHROMIUM_GIT_REPO_PREFIX = "git://chromium.googlesource.com/chromium"
 WAM_DEMO_MANUAL_WEB_APPLICATION = "com.webos.app.neva.wam.demo.manual"
 
 SRC_URI = " \
-    ${NEVA_GIT_REPO_PREFIX}/chromium;destsuffix=git/src;branch=neva-master;name=chromium;protocol=ssh \
+    ${NEVA_GIT_REPO_PREFIX}/chromium;destsuffix=git/src;branch=neva-main;name=chromium;protocol=https \
     ${CHROMIUM_GIT_REPO_PREFIX}/tools/depot_tools.git;branch=main;destsuffix=git/depot_tools;name=depot_tools;protocol=https \
 "
 DEPOT_TOOLS_DIR ?= "${S}/depot_tools"
