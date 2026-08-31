@@ -21,10 +21,6 @@ UNITTESTS_PACKAGE = "${@oe.utils.conditional('DEPLOY_UNITTESTS', 'true', 'neva-u
 
 PACKAGECONFIG[debug] = "symbol_level=2,symbol_level=0"
 
-# TODO: remove it when RP submits http://gpro.lge.com/#/c/259070/1/meta-webos/recipes-webos/chromium/webruntime.inc
-PACKAGECONFIG[debug-webcore] = ""
-PACKAGECONFIG[debug-blink] = "blink_symbol_level=1,blink_symbol_level=0"
-
 PACKAGECONFIG[v8_lite] = "v8_enable_lite_mode=true,v8_enable_lite_mode=false"
 
 GN_ARGS:append:aarch64 = " arm_control_flow_integrity=\"none\""
