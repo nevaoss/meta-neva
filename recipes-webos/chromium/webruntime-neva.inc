@@ -216,7 +216,7 @@ RDEPENDS:${PN}:append = "${@oe.utils.conditional('DEPLOY_CHROMEDRIVER', 'true', 
 RDEPENDS:${PN}:append = "${@oe.utils.conditional('DEPLOY_WAM_DEMO', 'true', \
                          ' ${WAM_DEMO_APPLICATION}', '', d)}"
 
-PACKAGES += "${UNITTESTS_PACKAGE}"
+PACKAGES =+ "${UNITTESTS_PACKAGE}"
 
 FILES:${PN}:remove = "${webos_sysbus_manifestsdir}"
 FILES:${PN}:remove = "${webos_sysbus_permissionsdir}"
