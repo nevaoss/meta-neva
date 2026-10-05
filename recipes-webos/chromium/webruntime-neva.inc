@@ -218,7 +218,7 @@ RDEPENDS:${PN}:append = "${@oe.utils.conditional('DEPLOY_CHROMEDRIVER', 'true', 
 RDEPENDS:${PN}:append = "${@oe.utils.conditional('DEPLOY_WAM_DEMO', 'true', \
                          ' ${WAM_DEMO_APPLICATION}', '', d)}"
 
-PACKAGES += "${UNITTESTS_PACKAGE}"
+PACKAGES =+ "${UNITTESTS_PACKAGE}"
 
 FILES:${PN}:remove = "${webos_sysbus_manifestsdir}"
 FILES:${PN}:remove = "${webos_sysbus_permissionsdir}"
@@ -238,7 +238,7 @@ FILES:${WAM_DEMO_APPLICATION} += "${webos_sysbus_manifestsdir}/${WAM_DEMO_APPLIC
                                   ${webos_sysbus_rolesdir}/${WAM_DEMO_MANUAL_WEB_APPLICATION}.role.json \
                                  "
 
-FILES:${UNITTESTS_PACKAGE} += "/usr/bin/neva_unittests"
+FILES:${UNITTESTS_PACKAGE} += "/usr/bin/neva_unittests /usr/media"
 FILES:${BROWSERSHELL_APPLICATION} += "${BROWSERSHELL_APPLICATION_DIR} \
                                       ${webos_sysbus_permissionsdir}/${BROWSERSHELL_APPLICATION}.perm.json \
                                       ${webos_sysbus_rolesdir}/${BROWSERSHELL_APPLICATION}.role.json \
