@@ -2,6 +2,11 @@
 
 require chromium-stdlib-neva.inc
 
+# Siso determines the root of the Chromium project based on the directory
+# passed with the -C parameter. OUT_DIR is located outside the Chromium
+# gclient branch when using externalsrc, so we define SISO_OUT_DIR.
+SISO_OUT_DIR = "${S}/src/oe-workdir/${BP}/${BUILD_TYPE}"
+
 do_configure() {
     export GYP_CHROMIUM_NO_ACTION=1
     export PATH="${HOSTTOOLS_DIR}:${DEPOT_TOOLS_DIR}:$PATH"
@@ -11,14 +16,7 @@ do_configure() {
         configure_gn_clean "${OUT_DIR}"
     fi
 
-    if [ "${USE_SISO}" = "true" ]; then
-        # Copy Chromium's Siso config into OUT_DIR to make Siso treat OUT_DIR
-        # as part of exec_root. By default, Siso determines exec_root by locating
-        # build/config/siso, which normally exists under chromium/src. Without this
-        # copy, OUT_DIR outside chromium/src is rejected as "out of exec root".
-        mkdir -p ${OUT_DIR}/build/config
-        cp -r ${S}/src/build/config/siso ${OUT_DIR}/build/config/
-    else
+    if [ "${USE_SISO}" != "true" ]; then
         rm -rf ${OUT_DIR}/build/
     fi
 
@@ -35,7 +33,7 @@ do_compile() {
 
     cd "${S}/src"
     set_build_tool_and_parallel_make
-    ${BUILD_TOOL} "${ADJUSTED_PARALLEL_MAKE}" -C "${OUT_DIR}" "${TARGET}"
+    ${BUILD_TOOL} "${ADJUSTED_PARALLEL_MAKE}" -C "${SISO_OUT_DIR}" "${TARGET}"
 }
 
 do_install() {
