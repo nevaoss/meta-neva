@@ -82,6 +82,11 @@ GN_ARGS:append = " \
   webos_sysbus_containersdir=\"${webos_sysbus_containersdir}\"\
 "
 
+# Siso determines the root of the Chromium project based on the directory
+# passed with the -C parameter. OUT_DIR is located outside the Chromium
+# gclient branch when using externalsrc, so we define SISO_OUT_DIR.
+SISO_OUT_DIR = "${S}/src/oe-workdir/${BP}/${BUILD_TYPE}"
+
 addtask do_gclient_sync before do_configure
 
 # It's needed to use MACHINE in do_gclient_sync()
@@ -120,14 +125,7 @@ do_configure() {
     echo GN_ARGS is "${GN_ARGS}"
     echo BUILD_TARGETS are ${TARGET} ${UNITTESTS_TARGETS}
 
-    if [ "${USE_SISO}" = "true" ]; then
-        # Make a link to Chromium's Siso config inside OUT_DIR to make Siso treat OUT_DIR
-        # as part of exec_root. By default, Siso determines exec_root by locating
-        # build/config/siso, which normally exists under chromium/src. Without this link
-        # OUT_DIR outside chromium/src is rejected as "out of exec root".
-        mkdir -p ${OUT_DIR}/build
-        ln -sfn ${S}/src/build/config ${OUT_DIR}/build/config
-    else
+    if [ "${USE_SISO}" != "true" ]; then
         rm -rf ${OUT_DIR}/build/
     fi
 
@@ -147,7 +145,7 @@ do_compile() {
     for target in ${TARGET} ${UNITTESTS_TARGETS}
     do
         set_build_tool_and_parallel_make
-        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} ${target}
+        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} ${target}
     done
 
     exit 0 # ugly hack! to prevent any :append from being executed
@@ -168,32 +166,32 @@ do_install() {
     set_build_tool_and_parallel_make
 
     cd ${S}/src
-    ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} webos/install/weboswebruntime
+    ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} webos/install/weboswebruntime
 
     if ${DEPLOY_BROWSER}; then
-        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} webos/install/default_browser
+        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} webos/install/default_browser
     fi
 
     if ${DEPLOY_CHROMEDRIVER}; then
-        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} webos/install/chromedriver
+        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} webos/install/chromedriver
     fi
 
     if ${DEPLOY_WAM_DEMO}; then
-        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} webos/install/wam_demo
+        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} webos/install/wam_demo
 
         W_DIR=${D}${WAM_DEMO_APPLICATION_DIR}
         chmod -v 755 ${W_DIR}/run_wam_demo
     fi
 
     if ${DEPLOY_BROWSERSHELL}; then
-        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} webos/install/browser_shell
+        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} webos/install/browser_shell
         BS_DIR=${D}${BROWSERSHELL_APPLICATION_DIR}
         chmod -v 755 ${BS_DIR}/browser_shell
         chmod -v 755 ${BS_DIR}/run_browser_shell
     fi
 
     if ${DEPLOY_UNITTESTS}; then
-        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} webos/install/unit_tests
+        ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${SISO_OUT_DIR} webos/install/unit_tests
     fi
 
     if ${DEPLOY_BROWSER}; then
