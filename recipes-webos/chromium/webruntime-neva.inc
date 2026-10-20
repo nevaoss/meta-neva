@@ -4,6 +4,7 @@ require webruntime-common-neva.inc
 
 # Add required DEPENDS which missed in parent meta
 DEPENDS:append = " libva"
+DEPENDS:append = " dbus-native"
 
 # Enable this in webos-local.conf or in recipe to build
 DEPLOY_CHROMEDRIVER = "true"
