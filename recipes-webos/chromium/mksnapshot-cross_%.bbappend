@@ -35,6 +35,9 @@ do_configure() {
 }
 
 do_compile() {
+
+    export WEBOS_CHROMIUM_ROOT="${S}/src"
+
     if [ ! -f ${OUT_DIR}/build.ninja ]; then
         do_configure
     fi
