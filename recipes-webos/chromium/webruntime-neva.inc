@@ -89,6 +89,8 @@ addtask do_gclient_sync before do_configure
 # and apply different patches for different MACHINEs.
 export MACHINE
 
+PATCHES_DIR_PATH:prepend := "${THISDIR}/patches"
+
 do_gclient_sync() {
     export GYP_CHROMIUM_NO_ACTION=1
     export PATH="${HOSTTOOLS_DIR}:${DEPOT_TOOLS_DIR}:$PATH"
@@ -108,6 +110,8 @@ do_gclient_sync() {
           fi'
     fi
     gclient sync --with_tags --with_branch_heads
+
+    git -C ${DEPOT_TOOLS_DIR} am ${PATCHES_DIR_PATH}/0001-webos-Add-way-to-add-external-src-path.patch
 }
 
 do_configure() {
@@ -143,6 +147,7 @@ do_compile() {
          do_configure
     fi
 
+    export WEBOS_CHROMIUM_ROOT="${S}/src"
     PATH="${DEPOT_TOOLS_DIR}:$PATH"
     cd ${S}/src
     for target in ${TARGET} ${UNITTESTS_TARGETS}
@@ -165,6 +170,7 @@ install_ls2_roles() {
 }
 
 do_install() {
+    export WEBOS_CHROMIUM_ROOT="${S}/src"
     PATH="${DEPOT_TOOLS_DIR}:$PATH"
     set_build_tool_and_parallel_make
 
