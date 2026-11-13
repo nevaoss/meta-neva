@@ -133,7 +133,7 @@ do_configure() {
     fi
 
     cd ${S}/src
-    gn gen ${OUT_DIR} --args="${GN_ARGS}"
+    gn gen ${OUT_DIR} --args="${GN_ARGS}" 2>&1 | tee "${OUT_DIR}/gn_gen.log"
 }
 
 # TODO: commit a patch to RP meta to use DEPOT_TOOLS_DIR ?= "${S}/depot_tools"
