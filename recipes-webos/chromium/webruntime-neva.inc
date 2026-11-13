@@ -101,13 +101,36 @@ do_gclient_sync() {
             --custom-var=checkout_configuration=small \
             --name=src --unmanaged ${NEVA_GIT_REPO_PREFIX}/chromium
     if [ -f .gclient_entries ]; then
+        echo "Reset gclient dependencies state: $(pwd)"
+
+        export GCLIENT_ROOT_REPOSITORY="$(pwd)/src"
         gclient recurse -j1 sh -c '
-          if test -d "$(git rev-parse --git-path rebase-apply)"; then
-            echo "Aborting git am in: $PWD"
-            git am --abort
-          fi'
+            repository=$(pwd)
+
+            echo "=== $repository ==="
+
+            git am --abort 2>/dev/null || true
+            git rebase --abort 2>/dev/null || true
+            git cherry-pick --abort 2>/dev/null || true
+            git merge --abort 2>/dev/null || true
+
+            git reset --hard HEAD
+
+            if [ "$repository" != "$GCLIENT_ROOT_REPOSITORY" ]; then
+                branch=$(git branch --show-current)
+
+                if [ -n "$branch" ]; then
+                echo "Detach from local branch: $branch"
+                git checkout --detach HEAD
+                else
+                echo "Already in detached HEAD"
+                fi
+            else
+                echo "Keep unmanaged src repository on its current branch"
+            fi
+        '
     fi
-    gclient sync --with_tags --with_branch_heads
+    gclient sync -D --force --reset --with_tags --with_branch_heads
 }
 
 do_configure() {
