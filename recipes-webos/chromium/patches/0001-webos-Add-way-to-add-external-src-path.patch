@@ -1,0 +1,50 @@
+From 3fe28fb7cddd65b45df6711bd81f2339a1d7508b Mon Sep 17 00:00:00 2001
+From: German Cvetkov <german.cvetkov@lge.com>
+Date: Fri, 30 Oct 2026 16:49:24 +0300
+Subject: [PATCH] [webos] Add way to add external src path
+
+webOS builds Chromium with an out-of-tree GN output directory located
+outside of the Chromium checkout.
+
+After depot_tools change abb41e00d327656e ("Harden standalone repo
+lookup and buildtools precedence"), GetPrimarySolutionPath() resolves
+the project root from the output directory path instead of the process
+working directory. In Yocto builds this causes Siso bootstrap logic to
+treat the external output directory as the project root and fail to
+locate build/config/siso and third_party/siso under the Chromium tree.
+
+Introduce WEBOS_CHROMIUM_ROOT environment override that allows the
+recipe to explicitly provide the Chromium checkout root while keeping
+the existing out-of-tree output directory layout.
+
+This keeps the change isolated to webOS/Yocto integration and avoids
+modifying Chromium build output paths.
+
+Issue: NEVA-11492
+---
+ gclient_paths.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/gclient_paths.py b/gclient_paths.py
+index 63ffeaaba..273bf206a 100644
+--- a/gclient_paths.py
++++ b/gclient_paths.py
+@@ -83,6 +83,15 @@ def _GetPrimarySolutionPathInternal(cwd):
+         source_dir_name = GetGClientPrimarySolutionName(gclient_root) or "src"
+         return os.path.join(gclient_root, source_dir_name)
+ 
++    # webOS compatibility:
++    # Yocto keeps OUT_DIR outside of the chromium checkout.
++    # Allow the build recipe to explicitly provide Chromium root.
++    override_root = os.environ.get("WEBOS_CHROMIUM_ROOT")
++    if override_root:
++        override_root = os.path.abspath(override_root)
++        if os.path.exists(override_root):
++            return override_root
++
+     # Some projects might not use .gclient. Try to see whether we're in a git
+     # checkout that contains a "buildtools" directory.
+     top_dir = cwd
+-- 
+2.34.1
+
