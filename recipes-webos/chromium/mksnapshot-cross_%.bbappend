@@ -19,16 +19,7 @@ do_configure() {
         configure_gn_clean "${OUT_DIR}"
     fi
 
-    if [ "${USE_SISO}" = "true" ]; then
-        # Make a link to Chromium's Siso config inside OUT_DIR to make Siso treat OUT_DIR
-        # as part of exec_root. By default, Siso determines exec_root by locating
-        # build/config/siso, which normally exists under chromium/src. Without this link
-        # OUT_DIR outside chromium/src is rejected as "out of exec root".
-        mkdir -p ${OUT_DIR}/build
-        ln -sfn ${S}/src/build/config ${OUT_DIR}/build/config
-    else
-        rm -rf ${OUT_DIR}/build/
-    fi
+    rm -rf ${OUT_DIR}/build/
 
     cd ${S}/src
     gn --root=${S}/src --dotfile=neva/mksnapshot.gn gen ${OUT_DIR} --args="${GN_ARGS}"
