@@ -48,6 +48,10 @@ do_compile() {
 
     ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} \
         ${V8_SNAPSHOT_TOOLCHAIN}/phony/v8/run_torque
+
+    ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} \
+        ${V8_SNAPSHOT_TOOLCHAIN}/gen/third_party/perfetto/protos/perfetto/trace/trace_packet_defaults.pbzero.h \
+        ${V8_SNAPSHOT_TOOLCHAIN}/gen/third_party/perfetto/protos/perfetto/trace/track_event/track_event.pbzero.h
     ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} ${TARGET}
 }
 
