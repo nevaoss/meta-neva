@@ -137,7 +137,13 @@ do_configure() {
     fi
 
     cd ${S}/src
-    gn gen "${OUT_DIR}" --args="${GN_ARGS}" >"${OUT_DIR}/gn_gen.log" 2>&1
+
+    GN_LOG="${OUT_DIR}/gn_gen.log"
+    gn gen "${OUT_DIR}" --args="${GN_ARGS}" >"${GN_LOG}" 2>&1 || {
+        rc=$?
+        bberror "GN generation failed with exit code ${rc}:\n$(cat "${GN_LOG}")"
+        exit "${rc}"
+    }
 }
 
 # TODO: commit a patch to RP meta to use DEPOT_TOOLS_DIR ?= "${S}/depot_tools"
