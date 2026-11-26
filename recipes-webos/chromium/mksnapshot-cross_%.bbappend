@@ -45,6 +45,9 @@ do_compile() {
 
     cd ${S}/src
     set_build_tool_and_parallel_make
+
+    ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} \
+        ${V8_SNAPSHOT_TOOLCHAIN}/phony/v8/run_torque
     ${BUILD_TOOL} ${ADJUSTED_PARALLEL_MAKE} -C ${OUT_DIR} ${TARGET}
 }
 
